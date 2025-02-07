@@ -2,8 +2,21 @@ import { useEffect, useRef, useState } from 'react';
 import Peer, { MediaConnection } from 'peerjs';
 
 export default function Home() {
-  const [myPeerId, setMyPeerId] = useState<string>('');
-  const [targetPeerId, setTargetPeerId] = useState<string>('');
+  // Use localStorage for persistent peer ID
+  const [myPeerId, setMyPeerId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('myPeerId') || '';
+    }
+    return '';
+  });
+
+  const [targetPeerId, setTargetPeerId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('targetPeerId') || '';
+    }
+    return '';
+  });
+
   const [peer, setPeer] = useState<Peer | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<string>('');
   const [currentCall, setCurrentCall] = useState<MediaConnection | null>(null);
@@ -14,37 +27,70 @@ export default function Home() {
 
   // Initialize peer connection
   useEffect(() => {
-    const newPeer = new Peer({
-      host: '0.peerjs.com',
-      port: 443,
-      path: '/',
-      secure: false,
-    });
+    let newPeer: Peer;
 
-    // Peer events
-    newPeer.on('open', (id) => {
-      setMyPeerId(id);
-      setConnectionStatus('Ready to connect');
-      setPeer(newPeer);
-    });
+    const initializePeer = () => {
+      // If we have a stored peer ID, use it to create the peer
+      if (myPeerId) {
+        newPeer = new Peer(myPeerId, {
+          host: '0.peerjs.com',
+          port: 443,
+          path: '/',
+          secure: false,
+        });
+      } else {
+        newPeer = new Peer({
+          host: '0.peerjs.com',
+          port: 443,
+          path: '/',
+          secure: false,
+        });
+      }
 
-    newPeer.on('error', (error) => {
-      console.error(error);
-      setConnectionStatus(`Error: ${error.type}`);
-    });
+      // Peer events
+      newPeer.on('open', (id) => {
+        setMyPeerId(id);
+        localStorage.setItem('myPeerId', id);
+        setConnectionStatus('Ready to connect');
+        setPeer(newPeer);
 
-    newPeer.on('disconnected', () => {
-      setConnectionStatus('Disconnected');
-    });
+        // If we have a stored target peer ID, automatically try to reconnect
+        const storedTargetPeerId = localStorage.getItem('targetPeerId');
+        if (storedTargetPeerId && !currentCall) {
+          setTargetPeerId(storedTargetPeerId);
+          startCall(storedTargetPeerId);
+        }
+      });
 
-    // Handle incoming calls
-    newPeer.on('call', handleIncomingCall);
+      newPeer.on('error', (error) => {
+        console.error(error);
+        setConnectionStatus(`Error: ${error.type}`);
 
+        // If the peer is disconnected, try to reconnect
+        if (error.type === 'peer-unavailable') {
+          setTimeout(initializePeer, 5000); // Retry after 5 seconds
+        }
+      });
+
+      newPeer.on('disconnected', () => {
+        setConnectionStatus('Disconnected - Attempting to reconnect...');
+        newPeer.reconnect();
+      });
+
+      // Handle incoming calls
+      newPeer.on('call', handleIncomingCall);
+    };
+
+    initializePeer();
+
+    // Cleanup function
     return () => {
       cleanupMedia();
-      newPeer.destroy();
+      if (newPeer) {
+        newPeer.destroy();
+      }
     };
-  }, []);
+  }, []); // Empty dependency array since we handle reconnection internally
 
   const cleanupMedia = () => {
     if (localStream) {
@@ -79,6 +125,10 @@ export default function Home() {
       call.answer(stream);
       setCurrentCall(call);
 
+      // Store the caller's peer ID
+      localStorage.setItem('targetPeerId', call.peer);
+      setTargetPeerId(call.peer);
+
       call.on('stream', (remoteStream) => {
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = remoteStream;
@@ -89,12 +139,14 @@ export default function Home() {
       call.on('close', () => {
         setConnectionStatus('Call ended');
         cleanupMedia();
+        localStorage.removeItem('targetPeerId');
       });
 
       call.on('error', (error) => {
         console.error(error);
         setConnectionStatus(`Call error: ${error}`);
         cleanupMedia();
+        localStorage.removeItem('targetPeerId');
       });
 
     } catch (err) {
@@ -103,8 +155,8 @@ export default function Home() {
     }
   };
 
-  const startCall = async () => {
-    if (!peer || !targetPeerId) {
+  const startCall = async (peerIdToCall: string = targetPeerId) => {
+    if (!peer || !peerIdToCall) {
       setConnectionStatus('Invalid peer ID or connection');
       return;
     }
@@ -112,6 +164,9 @@ export default function Home() {
     try {
       cleanupMedia(); // Cleanup any existing calls
       setConnectionStatus('Initiating call...');
+
+      // Store the target peer ID
+      localStorage.setItem('targetPeerId', peerIdToCall);
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
@@ -123,7 +178,7 @@ export default function Home() {
         localVideoRef.current.srcObject = stream;
       }
 
-      const call = peer.call(targetPeerId, stream);
+      const call = peer.call(peerIdToCall, stream);
       setCurrentCall(call);
 
       call.on('stream', (remoteStream) => {
@@ -136,24 +191,28 @@ export default function Home() {
       call.on('close', () => {
         setConnectionStatus('Call ended');
         cleanupMedia();
+        localStorage.removeItem('targetPeerId');
       });
 
       call.on('error', (error) => {
         console.error(error);
         setConnectionStatus(`Call error: ${error}`);
         cleanupMedia();
+        localStorage.removeItem('targetPeerId');
       });
 
     } catch (err) {
       console.error('Failed to start call:', err);
       setConnectionStatus('Failed to start call');
       cleanupMedia();
+      localStorage.removeItem('targetPeerId');
     }
   };
 
   const endCall = () => {
     cleanupMedia();
     setConnectionStatus('Call ended');
+    localStorage.removeItem('targetPeerId');
   };
 
   return (
@@ -172,7 +231,7 @@ export default function Home() {
             className="border p-2 mr-2 rounded"
           />
           <button
-            onClick={startCall}
+            onClick={() => startCall(targetPeerId)}
             disabled={!!currentCall}
             className="bg-blue-500 text-white px-4 py-2 rounded mr-2 disabled:bg-gray-400"
           >
