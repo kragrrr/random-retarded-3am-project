@@ -1,6 +1,6 @@
 from gensim.models import FastText
 from gensim.test.utils import common_texts
-import flask 
+import flask
 import flask_cors
 from flask import request, jsonify
 
@@ -31,33 +31,33 @@ def matchPref():
     orientation2 = data['orientation2']
     age2 = int(data['age2'])
     
-# 1. Checking Gender Compatibility (Simplified)
-    if gender1 == gender2:  ### I'm not sure if this is the best way to check for.
-        gender_compatible = False
-    else:
-        gender_compatible = True
+# # 0. Checking Gender Compatibility (Simplified)
+#     if gender1 == gender2:  ### Wrong???
+#         gender_compatible = False
+#     else:
+#         gender_compatible = True
 
-# 2. Orientation Compatibility
+# 1. Orientation Compatibility
     orientation_compatible = False
-    if orientation1 == "heterosexual/straight":
-        if orientation2 == "heterosexual/straight" and gender1 != gender2:
-            orientation_compatible = True
-    elif orientation1 == "homosexual/gay":
-        if orientation2 == "homosexual/gay" and gender1 == gender2:
-            orientation_compatible = True
-    elif orientation1 == "other":
-        orientation_compatible = True # For now, "other" is compatible with everyone.
 
-    if orientation2 == "heterosexual/straight":
-        if orientation1 == "heterosexual/straight" and gender1 != gender2:
+    match (orientation1.lower(), orientation2.lower()):
+        case ("heterosexual/straight", "heterosexual/straight"):
+            # Straight only matches straight with different genders
+            orientation_compatible = (gender1 != gender2)
+        
+        case ("homosexual/gay", "homosexual/gay"):
+            # Gay only matches gay with same gender
+            orientation_compatible = (gender1 == gender2)
+        
+        case ("other", "other"):
+            # Other only matches other
             orientation_compatible = True
-    elif orientation2 == "homosexual/gay":
-        if orientation1 == "homosexual/gay" and gender1 == gender2:
-            orientation_compatible = True
-    elif orientation2 == "other":
-        orientation_compatible = True # For now "other" is compatible with everyone.
-      
-# 3. Check Age Compatibility with Range Filter
+        
+        case _:
+            # All other combinations are incompatible
+            orientation_compatible = False
+        
+# 2. Check Age Compatibility with Range Filter
     min_age = int(data.get('min_age', 18))  # default 18
     max_age = int(data.get('max_age', 99))  # default 99
 
@@ -69,11 +69,10 @@ def matchPref():
     else:
         age_compatible = False
 
-# 4. Overall Compatibility (Combine criteria)
-    overall_compatible = gender_compatible and orientation_compatible and age_compatible
+# 3. Overall Compatibility (Combine criteria)
+    overall_compatible = orientation_compatible and age_compatible # and gender_compatible - was wrong???
 
-    return jsonify({'gender_compatible': gender_compatible,
-                    'orientation_compatible': orientation_compatible,
+    return jsonify({'orientation_compatible': orientation_compatible,
                     'age_compatible': age_compatible,
                     'overall_compatible': overall_compatible,
                     'min_age': min_age, # Returning the min and max age to the frontend
