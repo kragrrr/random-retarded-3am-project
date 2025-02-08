@@ -1,14 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { saveUserProfile } from '@/lib/firebase-utils';
+import type { UserProfile } from '@/lib/types';
 
-type UserDetails = {
-    displayName: string;
-    gender: string;
-    birthDate: string;
-    location: string;
-    bio: string;
-    interests: string[];
-};
+type UserDetails = Omit<UserProfile, 'createdAt'>;
 
 export default function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
     const { user } = useAuth();
@@ -24,9 +19,19 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // TODO: Save user details to database
-        console.log('Saving user details:', userDetails);
-        onComplete();
+        if (!user?.uid) return;
+
+        try {
+            const success = await saveUserProfile(user.uid, userDetails);
+            if (success) {
+                onComplete();
+            } else {
+                alert('Failed to save profile. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            alert('An error occurred. Please try again.');
+        }
     };
 
     const renderStep1 = () => (

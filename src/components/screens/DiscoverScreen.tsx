@@ -1,8 +1,4 @@
-import { useSession } from 'next-auth/react';
-
 export default function DiscoverScreen() {
-    const { data: session } = useSession();
-
     return (
         <>
             {/* New Matches */}
