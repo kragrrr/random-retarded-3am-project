@@ -3,7 +3,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { getUserProfile } from '@/lib/firebase-utils';
 import DiscoverScreen from '@/components/screens/DiscoverScreen';
 import ProfileScreen from '@/components/screens/ProfileScreen';
-import ChatScreen from '@/components/screens/ChatScreen';
 import OnboardingScreen from '@/components/screens/OnboardingScreen';
 
 export default function Home() {
@@ -73,31 +72,21 @@ export default function Home() {
                 <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
                     {activeTab === 'discover' ? (
                         <>
-                            <button className="p-2 rounded-lg hover:bg-gray-100">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
-                            </button>
-                            <h1 className="text-xl font-semibold">Discover</h1>
-                            <button className="p-2 rounded-lg hover:bg-gray-100">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </button>
+                            <h1 className="text-xl font-semibold">Find Dates</h1>
                         </>
                     ) : (
                         <>
-                            <button className="p-2 rounded-lg hover:bg-gray-100">
+                            <button className="p-2 rounded-lg hover:bg-gray-100" onClick={() => setActiveTab('discover')}>
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                 </svg>
                             </button>
-                            <h1 className="text-xl font-semibold">{activeTab === 'near' ? 'Near You' : 'My Profile'}</h1>
-                            <button className="p-2 rounded-lg hover:bg-gray-100">
+                            <h1 className="text-xl font-semibold"> My Profile</h1>
+                            {/* <button className="p-2 rounded-lg hover:bg-gray-100">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                                 </svg>
-                            </button>
+                            </button> */}
                         </>
                     )}
                 </div>
@@ -106,7 +95,6 @@ export default function Home() {
             {/* Main Content */}
             <main className="max-w-xl mx-auto px-4 py-6 mb-20">
                 {activeTab === 'discover' && <DiscoverScreen />}
-                {activeTab === 'chat' && <ChatScreen />}
                 {activeTab === 'profile' && <ProfileScreen />}
             </main>
 
@@ -119,14 +107,6 @@ export default function Home() {
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('chat')}
-                        className={`p-2 ${activeTab === 'chat' ? 'text-rose-500' : 'text-gray-500'}`}
-                    >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                     </button>
                     <button
