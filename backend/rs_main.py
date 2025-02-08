@@ -12,10 +12,10 @@ from nltk.stem import WordNetLemmatizer
 
 # Sample bio text
 boy_bio = """
-Hey there! I'm a 21-year-old guy who loves adventure and exploring new places. I'm passionate about photography and capturing the beauty of nature. When I'm not behind the camera, you can find me hiking, biking, or just enjoying the great outdoors. I'm also a bit of a foodie and love trying out new recipes and restaurants. Music is a big part of my life, and I enjoy playing the guitar and discovering new bands. I'm looking for someone who shares my love for adventure and has a positive outlook on life. Let's create some amazing memories together!
+I love hiking, playing guitar, and reading sci-fi novels. He enjoys cooking and outdoor adventures.
 """
 girl_bio = """
-Hi! I'm a 22-year-old girl who loves to travel and experience new cultures. I'm passionate about painting and expressing myself through art. When I'm not in my studio, you can find me at the beach, practicing yoga, or reading a good book. I'm also a huge animal lover and enjoy volunteering at the local shelter. Music is my escape, and I love attending live concerts and discovering new artists. I'm looking for someone who is kind, adventurous, and has a great sense of humor. Let's explore the world and make unforgettable memories together!
+I enjoy painting, hiking, and reading fantasy novels. She loves animals, cooking, and nature walks.
 """
 
 def extract_features(text):
